@@ -1,8 +1,7 @@
 extends Node
 ## Central data store for all era definitions.
-## Autoloaded as "EraData" so any script can access it.
+## Autoload this script as "EraData" in Project Settings > Autoload.
 
-## Returns the array of all era dictionaries.
 static func get_eras() -> Array:
 	return [
 		{
@@ -13,13 +12,30 @@ static func get_eras() -> Array:
 			"color_secondary": Color("#40916C"),
 			"color_accent": Color("#52B788"),
 			"color_bg_tint": Color(0.05, 0.15, 0.1, 0.35),
-			"summary": "The arcade era introduced gaming to the masses through coin-operated machines. Players paid per play — a direct, visible transaction. While difficulty was tuned to encourage spending, the cost was transparent and the experience was shared in public social spaces.",
+			"summary": "The arcade era introduced gaming to the masses through coin-operated machines. Players paid per play through a direct and visible transaction. While difficulty was often tuned to encourage replay spending, the price of participation was transparent and easy to understand.",
 			"characteristics": [
-				"Coin-per-play: a transparent, tangible cost model",
-				"Difficulty tuned to drive replay spending",
-				"Shared social spaces fostered community",
-				"No hidden costs or ongoing commitments"
+				"Coin-per-play was a clear and tangible cost model",
+				"Difficulty encouraged retries and repeat spending",
+				"Public arcade spaces made gaming social",
+				"Costs were immediate, visible, and limited"
 			],
+			"user_behavior": [
+				"Players inserted another coin immediately after failing",
+				"Sessions stayed short and spending happened in small bursts",
+				"Losing felt frustrating, but the cost was obvious"
+			],
+			"manipulation": [
+				"Difficulty spikes",
+				"Short failure loops",
+				"Replay pressure"
+			],
+			"examples": [
+				"Pac-Man",
+				"Space Invaders",
+				"Donkey Kong"
+			],
+			"ethical_label": "Low Concern",
+			"reflection": "When does challenge become a tool to increase spending rather than enjoyment?",
 			"pressure": 0.25,
 			"bg_image": "res://assets/backgrounds/era_1_arcade.png",
 		},
@@ -31,13 +47,30 @@ static func get_eras() -> Array:
 			"color_secondary": Color("#5FA8D3"),
 			"color_accent": Color("#BEE9E8"),
 			"color_bg_tint": Color(0.05, 0.1, 0.18, 0.35),
-			"summary": "The retail era brought gaming home. Players purchased a complete experience for a fixed price — one transaction unlocked the entire game. This model respected the consumer with no hidden costs, delivering full value upfront.",
+			"summary": "The retail era brought gaming into the home. Players usually paid once for a complete product and could access the full experience without repeated transactions. Compared with later eras, this model gave players more certainty, ownership, and control over spending.",
 			"characteristics": [
-				"One-time purchase for the complete experience",
-				"No additional payments required after purchase",
-				"Physical ownership gave tangible value",
-				"Game quality drove sales, not spending hooks"
+				"One-time purchase unlocked the full game",
+				"No recurring payments were expected after purchase",
+				"Physical ownership added perceived value",
+				"Game quality, not spending loops, drove success"
 			],
+			"user_behavior": [
+				"Players focused on finishing or mastering a game they already owned",
+				"Spending decisions happened before play, not during it",
+				"Replay value came from content, not monetization pressure"
+			],
+			"manipulation": [
+				"Limited expansion sales",
+				"Brand loyalty",
+				"Hardware lock-in"
+			],
+			"examples": [
+				"Super Mario Bros.",
+				"The Legend of Zelda",
+				"Final Fantasy VII"
+			],
+			"ethical_label": "Lower Concern",
+			"reflection": "What changed when games stopped being sold as complete products?",
 			"pressure": 0.45,
 			"bg_image": "res://assets/backgrounds/era_2_living_room.png",
 		},
@@ -49,13 +82,32 @@ static func get_eras() -> Array:
 			"color_secondary": Color("#D4770B"),
 			"color_accent": Color("#FFBA49"),
 			"color_bg_tint": Color(0.2, 0.12, 0.03, 0.4),
-			"summary": "Digital distribution lowered barriers to entry with free-to-play models, but introduced microtransactions — small, frequent purchases for cosmetics, power, or progression. Game design increasingly funneled players toward spending.",
+			"summary": "Digital distribution lowered the barrier to entry and popularized free-to-play games, but it also normalized microtransactions for cosmetics, progression, and chance-based rewards. Design increasingly shifted from selling a full experience to encouraging repeated in-game purchases.",
 			"characteristics": [
-				"'Free to play' masks pay-to-progress design",
-				"Loot boxes introduce gambling mechanics",
-				"Psychological triggers exploit impulse spending",
-				"Endless content drip replaces complete experiences"
+				"Free-to-play often became pay-to-progress",
+				"Loot boxes introduced chance-based spending",
+				"Small purchases felt harmless but accumulated over time",
+				"Content design increasingly pushed players toward spending"
 			],
+			"user_behavior": [
+				"Players spent impulsively because prices seemed small",
+				"Progress frustration encouraged purchases to save time",
+				"Rare cosmetic items triggered repeated spending attempts",
+				"Players returned for rotating content and rewards"
+			],
+			"manipulation": [
+				"Variable rewards",
+				"Loot boxes",
+				"Progress gating",
+				"Scarcity framing"
+			],
+			"examples": [
+				"FIFA Ultimate Team",
+				"Clash of Clans",
+				"Overwatch loot boxes"
+			],
+			"ethical_label": "High Concern",
+			"reflection": "Are players making free choices, or are they being nudged by frustration and uncertainty?",
 			"pressure": 0.75,
 			"bg_image": "res://assets/backgrounds/era_3_bedroom.png",
 		},
@@ -67,38 +119,73 @@ static func get_eras() -> Array:
 			"color_secondary": Color("#D00000"),
 			"color_accent": Color("#FF5C5C"),
 			"color_bg_tint": Color(0.22, 0.04, 0.04, 0.45),
-			"summary": "Modern gaming demands perpetual spending through subscriptions, battle passes, and seasonal content. FOMO-driven design creates constant pressure to stay current, turning leisure into obligation and players into revenue streams.",
+			"summary": "Modern live-service games rely on subscriptions, battle passes, timed events, rotating shops, and seasonal rewards. The business model no longer depends only on a purchase, but on maintaining long-term engagement and turning attention, habit, and anxiety into revenue.",
 			"characteristics": [
-				"Battle passes create time-pressured spending cycles",
-				"FOMO drives engagement through artificial scarcity",
-				"Subscription layers stack recurring costs",
-				"Players become ongoing revenue streams, not customers"
+				"Battle passes create recurring spending cycles",
+				"FOMO drives engagement through limited-time rewards",
+				"Subscriptions stack costs over time",
+				"Players become long-term revenue sources instead of one-time customers"
 			],
+			"user_behavior": [
+				"Players log in daily to avoid missing rewards",
+				"Time-limited offers trigger impulse purchases",
+				"Social comparison encourages cosmetic spending",
+				"Many keep playing out of obligation rather than enjoyment"
+			],
+			"manipulation": [
+				"FOMO",
+				"Daily streaks",
+				"Timed exclusives",
+				"Social pressure",
+				"Recurring monetization layers"
+			],
+			"examples": [
+				"Fortnite Battle Pass",
+				"Call of Duty seasonal bundles",
+				"Genshin Impact gacha system"
+			],
+			"ethical_label": "Very High Concern",
+			"reflection": "When a game pressures people to keep paying and returning, is it still just entertainment?",
 			"pressure": 1.0,
 			"bg_image": "res://assets/backgrounds/era_4_esports.png",
 		},
 		{
-			"title": "PREDATORY BY DESIGN",
-			"era_label": "ERA V",
-			"decade": "The Modern Age",
-			"color_primary": Color("#4A1A6B"),
-			"color_secondary": Color("#7B2FBE"),
+			"title": "ETHICAL TAKEAWAY",
+			"era_label": "CONCLUSION",
+			"decade": "Today",
+			"color_primary": Color("#3C096C"),
+			"color_secondary": Color("#5A189A"),
 			"color_accent": Color("#C77DFF"),
-			"color_bg_tint": Color(0.14, 0.06, 0.22, 0.45),
-			"summary": "Today's games aren't just played — they're engineered to extract. Behind polished interfaces lie dark patterns designed to manipulate behavior: artificial scarcity, variable-ratio reward schedules, social pressure loops, and predatory pricing disguised as 'deals.' The line between game design and behavioral exploitation has never been thinner.",
+			"color_bg_tint": Color(0.12, 0.05, 0.18, 0.45),
+			"summary": "Gaming monetization evolved from visible payment into systems that often shape habits, attention, and spending behavior. The ethical issue is not whether games make money, but whether they do so in a way that respects player autonomy, especially for younger and more vulnerable players.",
 			"characteristics": [
-				"Loot boxes exploit gambling psychology with variable rewards",
-				"Battle passes weaponize sunk-cost fallacy and time pressure",
-				"Daily login rewards and rotating shops manufacture FOMO",
-				"Dark patterns obscure real costs with virtual currencies",
-				"Notification systems hijack attention to drive re-engagement"
+				"Modern monetization often targets behavior, not just purchases",
+				"Psychological design can weaken informed choice",
+				"Awareness helps players recognize manipulative systems",
+				"Ethical design should respect time, money, and well-being"
 			],
-			"pressure": 1.0,
-			"bg_image": "res://assets/backgrounds/era_5_predatory.png",
+			"user_behavior": [
+				"Players may confuse habit with enjoyment",
+				"Awareness can reduce impulsive spending",
+				"Reflection helps identify manipulative design patterns"
+			],
+			"manipulation": [
+				"Psychological pressure",
+				"Behavior shaping",
+				"Artificial urgency"
+			],
+			"examples": [
+				"Battle passes",
+				"Rotating shops",
+				"Daily reward systems"
+			],
+			"ethical_label": "Key Reflection",
+			"reflection": "Next time you spend in a game, ask: was it your choice, or was the system designed to push you there?",
+			"pressure": 0.9,
+			"bg_image": "res://assets/backgrounds/era_5_conclusion.png",
 		},
 	]
 
 
-## Returns how many eras are defined.
 static func get_era_count() -> int:
 	return get_eras().size()
