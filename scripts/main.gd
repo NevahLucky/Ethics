@@ -1,0 +1,598 @@
+extends Control
+## Main scene controller.
+## Builds the entire presentation UI programmatically and manages
+## era transitions, navigation, and animations.
+
+# ── State ──────────────────────────────────────────────────────────
+var current_era: int = 0
+var transitioning: bool = false
+var eras: Array = []
+
+# ── Node references (created in _build_ui) ─────────────────────────
+var bg_rect: TextureRect
+var color_overlay: ColorRect
+var dark_gradient: TextureRect
+var content_panel: PanelContainer
+var era_label_node: Label
+var title_label: Label
+var decade_label: Label
+var divider: ColorRect
+var summary_label: RichTextLabel
+var char_container: VBoxContainer
+var char_labels: Array[Label] = []
+var pressure_bar_bg: ColorRect
+var pressure_bar_fill: ColorRect
+var pressure_label_node: Label
+var pressure_value_label: Label
+var nav_prev: Button
+var nav_next: Button
+var nav_dots: Array[Button] = []
+var transition_overlay: ColorRect
+var title_screen_container: Control
+
+# ── Preloaded textures ─────────────────────────────────────────────
+var bg_textures: Array = []
+
+# ── Constants ──────────────────────────────────────────────────────
+const TRANSITION_DURATION := 0.5
+const CONTENT_STAGGER := 0.12
+const PRESSURE_BAR_HEIGHT := 220.0
+const PRESSURE_BAR_WIDTH := 18.0
+
+
+func _ready() -> void:
+	eras = EraData.get_eras()
+
+	# Preload background textures
+	for era in eras:
+		var tex = load(era.bg_image)
+		bg_textures.append(tex)
+
+	_build_ui()
+	_show_title_screen()
+
+
+func _input(event: InputEvent) -> void:
+	if transitioning:
+		return
+	if event is InputEventKey and event.pressed:
+		match event.keycode:
+			KEY_RIGHT, KEY_SPACE, KEY_ENTER:
+				if title_screen_container and title_screen_container.visible:
+					_dismiss_title_screen()
+				else:
+					_go_to_era(current_era + 1)
+			KEY_LEFT:
+				_go_to_era(current_era - 1)
+			KEY_ESCAPE:
+				get_tree().quit()
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  UI CONSTRUCTION
+# ═══════════════════════════════════════════════════════════════════
+
+func _build_ui() -> void:
+	_build_background()
+	_build_content_panel()
+	_build_pressure_meter()
+	_build_nav_bar()
+	_build_transition_overlay()
+	_build_title_screen()
+
+
+# ── Background layers ──────────────────────────────────────────────
+
+func _build_background() -> void:
+	# Background image
+	bg_rect = TextureRect.new()
+	bg_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bg_rect)
+
+	# Era color overlay
+	color_overlay = ColorRect.new()
+	color_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	color_overlay.color = Color(0, 0, 0, 0.3)
+	color_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(color_overlay)
+
+	# Dark gradient from bottom for text readability
+	dark_gradient = TextureRect.new()
+	dark_gradient.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dark_gradient.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var gradient_tex := GradientTexture2D.new()
+	var grad := Gradient.new()
+	grad.set_color(0, Color(0, 0, 0, 0.0))
+	grad.set_color(1, Color(0, 0, 0, 0.7))
+	grad.set_offset(0, 0.3)
+	grad.set_offset(1, 1.0)
+	gradient_tex.gradient = grad
+	gradient_tex.fill_from = Vector2(0.5, 0.0)
+	gradient_tex.fill_to = Vector2(0.5, 1.0)
+	gradient_tex.width = 4
+	gradient_tex.height = 256
+	dark_gradient.texture = gradient_tex
+	dark_gradient.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	add_child(dark_gradient)
+
+
+# ── Content panel ──────────────────────────────────────────────────
+
+func _build_content_panel() -> void:
+	# Outer margin to center the card
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 200)
+	margin.add_theme_constant_override("margin_right", 200)
+	margin.add_theme_constant_override("margin_top", 80)
+	margin.add_theme_constant_override("margin_bottom", 120)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(margin)
+
+	# Center container
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(center)
+
+	# The card itself
+	content_panel = PanelContainer.new()
+	content_panel.custom_minimum_size = Vector2(760, 0)
+	content_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	content_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.04, 0.04, 0.08, 0.88)
+	panel_style.corner_radius_top_left = 20
+	panel_style.corner_radius_top_right = 20
+	panel_style.corner_radius_bottom_left = 20
+	panel_style.corner_radius_bottom_right = 20
+	panel_style.content_margin_left = 56
+	panel_style.content_margin_right = 56
+	panel_style.content_margin_top = 48
+	panel_style.content_margin_bottom = 48
+	panel_style.border_width_left = 1
+	panel_style.border_width_right = 1
+	panel_style.border_width_top = 1
+	panel_style.border_width_bottom = 1
+	panel_style.border_color = Color(1, 1, 1, 0.08)
+	panel_style.shadow_color = Color(0, 0, 0, 0.4)
+	panel_style.shadow_size = 24
+	panel_style.shadow_offset = Vector2(0, 8)
+	content_panel.add_theme_stylebox_override("panel", panel_style)
+	center.add_child(content_panel)
+
+	# Content VBox
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	content_panel.add_child(vbox)
+
+	# Era label ("ERA I")
+	era_label_node = Label.new()
+	era_label_node.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	era_label_node.add_theme_font_size_override("font_size", 16)
+	era_label_node.add_theme_color_override("font_color", Color(0.6, 0.8, 0.7))
+	era_label_node.uppercase = true
+	vbox.add_child(era_label_node)
+
+	# Title
+	title_label = Label.new()
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title_label.add_theme_font_size_override("font_size", 52)
+	title_label.add_theme_color_override("font_color", Color.WHITE)
+	vbox.add_child(title_label)
+
+	# Decade
+	decade_label = Label.new()
+	decade_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	decade_label.add_theme_font_size_override("font_size", 22)
+	decade_label.add_theme_color_override("font_color", Color(0.6, 0.8, 0.7))
+	vbox.add_child(decade_label)
+
+	# Spacer
+	var spacer1 := Control.new()
+	spacer1.custom_minimum_size = Vector2(0, 8)
+	vbox.add_child(spacer1)
+
+	# Divider
+	divider = ColorRect.new()
+	divider.custom_minimum_size = Vector2(0, 2)
+	divider.color = Color(1, 1, 1, 0.12)
+	vbox.add_child(divider)
+
+	# Spacer
+	var spacer2 := Control.new()
+	spacer2.custom_minimum_size = Vector2(0, 8)
+	vbox.add_child(spacer2)
+
+	# Summary
+	summary_label = RichTextLabel.new()
+	summary_label.bbcode_enabled = true
+	summary_label.fit_content = true
+	summary_label.scroll_active = false
+	summary_label.custom_minimum_size = Vector2(640, 0)
+	summary_label.add_theme_font_size_override("normal_font_size", 19)
+	summary_label.add_theme_color_override("default_color", Color(0.82, 0.82, 0.86))
+	summary_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(summary_label)
+
+	# Spacer
+	var spacer3 := Control.new()
+	spacer3.custom_minimum_size = Vector2(0, 12)
+	vbox.add_child(spacer3)
+
+	# Characteristics container
+	char_container = VBoxContainer.new()
+	char_container.add_theme_constant_override("separation", 10)
+	vbox.add_child(char_container)
+
+
+# ── Pressure meter ─────────────────────────────────────────────────
+
+func _build_pressure_meter() -> void:
+	var container := Control.new()
+	container.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	container.position = Vector2(48, -PRESSURE_BAR_HEIGHT - 100)
+	container.size = Vector2(60, PRESSURE_BAR_HEIGHT + 60)
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(container)
+
+	# Label above
+	pressure_label_node = Label.new()
+	pressure_label_node.text = "PRESSURE"
+	pressure_label_node.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pressure_label_node.add_theme_font_size_override("font_size", 11)
+	pressure_label_node.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
+	pressure_label_node.position = Vector2(-8, -4)
+	pressure_label_node.size = Vector2(76, 20)
+	container.add_child(pressure_label_node)
+
+	# Bar background
+	pressure_bar_bg = ColorRect.new()
+	pressure_bar_bg.position = Vector2(14, 20)
+	pressure_bar_bg.size = Vector2(PRESSURE_BAR_WIDTH, PRESSURE_BAR_HEIGHT)
+	pressure_bar_bg.color = Color(1, 1, 1, 0.08)
+	container.add_child(pressure_bar_bg)
+
+	# Bar fill (anchored to bottom of bg)
+	pressure_bar_fill = ColorRect.new()
+	pressure_bar_fill.position = Vector2(14, 20 + PRESSURE_BAR_HEIGHT)
+	pressure_bar_fill.size = Vector2(PRESSURE_BAR_WIDTH, 0)
+	pressure_bar_fill.color = Color("#52B788")
+	container.add_child(pressure_bar_fill)
+
+	# Percentage label below bar
+	pressure_value_label = Label.new()
+	pressure_value_label.text = "25%"
+	pressure_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pressure_value_label.add_theme_font_size_override("font_size", 13)
+	pressure_value_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.45))
+	pressure_value_label.position = Vector2(-2, PRESSURE_BAR_HEIGHT + 26)
+	pressure_value_label.size = Vector2(50, 20)
+	container.add_child(pressure_value_label)
+
+
+# ── Navigation bar ─────────────────────────────────────────────────
+
+func _build_nav_bar() -> void:
+	var bar := HBoxContainer.new()
+	bar.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	bar.position = Vector2(-160, -60)
+	bar.size = Vector2(320, 44)
+	bar.add_theme_constant_override("separation", 16)
+	bar.alignment = BoxContainer.ALIGNMENT_CENTER
+	add_child(bar)
+
+	# Previous button
+	nav_prev = _make_nav_button("←")
+	nav_prev.pressed.connect(_on_prev_pressed)
+	bar.add_child(nav_prev)
+
+	# Dots
+	for i in range(eras.size()):
+		var dot := Button.new()
+		dot.text = "●"
+		dot.flat = true
+		dot.add_theme_font_size_override("font_size", 18)
+		dot.add_theme_color_override("font_color", Color(1, 1, 1, 0.25))
+		dot.add_theme_color_override("font_hover_color", Color(1, 1, 1, 0.6))
+		dot.custom_minimum_size = Vector2(28, 28)
+		dot.pressed.connect(_on_dot_pressed.bind(i))
+		bar.add_child(dot)
+		nav_dots.append(dot)
+
+	# Next button
+	nav_next = _make_nav_button("→")
+	nav_next.pressed.connect(_on_next_pressed)
+	bar.add_child(nav_next)
+
+
+func _make_nav_button(label_text: String) -> Button:
+	var btn := Button.new()
+	btn.text = label_text
+	btn.custom_minimum_size = Vector2(52, 40)
+	var style_normal := StyleBoxFlat.new()
+	style_normal.bg_color = Color(1, 1, 1, 0.07)
+	style_normal.corner_radius_top_left = 10
+	style_normal.corner_radius_top_right = 10
+	style_normal.corner_radius_bottom_left = 10
+	style_normal.corner_radius_bottom_right = 10
+	btn.add_theme_stylebox_override("normal", style_normal)
+	var style_hover := StyleBoxFlat.new()
+	style_hover.bg_color = Color(1, 1, 1, 0.15)
+	style_hover.corner_radius_top_left = 10
+	style_hover.corner_radius_top_right = 10
+	style_hover.corner_radius_bottom_left = 10
+	style_hover.corner_radius_bottom_right = 10
+	btn.add_theme_stylebox_override("hover", style_hover)
+	var style_pressed := StyleBoxFlat.new()
+	style_pressed.bg_color = Color(1, 1, 1, 0.22)
+	style_pressed.corner_radius_top_left = 10
+	style_pressed.corner_radius_top_right = 10
+	style_pressed.corner_radius_bottom_left = 10
+	style_pressed.corner_radius_bottom_right = 10
+	btn.add_theme_stylebox_override("pressed", style_pressed)
+	btn.add_theme_font_size_override("font_size", 22)
+	btn.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	btn.add_theme_color_override("font_hover_color", Color.WHITE)
+	return btn
+
+
+# ── Transition overlay ─────────────────────────────────────────────
+
+func _build_transition_overlay() -> void:
+	transition_overlay = ColorRect.new()
+	transition_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	transition_overlay.color = Color(0, 0, 0, 0)
+	transition_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(transition_overlay)
+
+
+# ── Title screen ───────────────────────────────────────────────────
+
+func _build_title_screen() -> void:
+	title_screen_container = Control.new()
+	title_screen_container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(title_screen_container)
+
+	# Dark backdrop
+	var bg := ColorRect.new()
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.color = Color(0.02, 0.03, 0.05, 0.95)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_screen_container.add_child(bg)
+
+	# Center everything
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_screen_container.add_child(center)
+
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 12)
+	center.add_child(vbox)
+
+	# Subtitle
+	var sub := Label.new()
+	sub.text = "ETHICS IN COMPUTING"
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.add_theme_font_size_override("font_size", 16)
+	sub.add_theme_color_override("font_color", Color(0.5, 0.7, 0.6, 0.7))
+	sub.uppercase = true
+	vbox.add_child(sub)
+
+	# Main title
+	var main_title := Label.new()
+	main_title.text = "The Cost of Play"
+	main_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	main_title.add_theme_font_size_override("font_size", 72)
+	main_title.add_theme_color_override("font_color", Color.WHITE)
+	vbox.add_child(main_title)
+
+	# Tagline
+	var tagline := Label.new()
+	tagline.text = "How Gaming Monetization Evolved to Exploit Players"
+	tagline.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tagline.add_theme_font_size_override("font_size", 20)
+	tagline.add_theme_color_override("font_color", Color(0.65, 0.65, 0.7, 0.8))
+	vbox.add_child(tagline)
+
+	# Spacer
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 40)
+	vbox.add_child(spacer)
+
+	# Start prompt
+	var prompt := Label.new()
+	prompt.text = "Press SPACE or → to begin"
+	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	prompt.add_theme_font_size_override("font_size", 16)
+	prompt.add_theme_color_override("font_color", Color(1, 1, 1, 0.35))
+	vbox.add_child(prompt)
+
+	# Pulse animation on the prompt
+	var tween := create_tween().set_loops()
+	tween.tween_property(prompt, "modulate:a", 0.4, 1.2).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(prompt, "modulate:a", 1.0, 1.2).set_trans(Tween.TRANS_SINE)
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  TITLE SCREEN
+# ═══════════════════════════════════════════════════════════════════
+
+func _show_title_screen() -> void:
+	title_screen_container.visible = true
+	content_panel.modulate.a = 0.0
+	# Load first era background behind title
+	if bg_textures.size() > 0:
+		bg_rect.texture = bg_textures[0]
+	color_overlay.color = eras[0].color_bg_tint
+
+
+func _dismiss_title_screen() -> void:
+	if transitioning:
+		return
+	transitioning = true
+	var tween := create_tween()
+	tween.tween_property(title_screen_container, "modulate:a", 0.0, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await tween.finished
+	title_screen_container.visible = false
+	title_screen_container.queue_free()
+	title_screen_container = null
+	_show_era(0)
+	content_panel.modulate.a = 0.0
+	var fade_in := create_tween()
+	fade_in.tween_property(content_panel, "modulate:a", 1.0, 0.5)
+	await fade_in.finished
+	transitioning = false
+	_animate_content_in()
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  ERA DISPLAY
+# ═══════════════════════════════════════════════════════════════════
+
+func _show_era(index: int) -> void:
+	current_era = index
+	var era: Dictionary = eras[index]
+
+	# Background
+	bg_rect.texture = bg_textures[index]
+
+	# Color overlay
+	color_overlay.color = era.color_bg_tint
+
+	# Era label + title + decade
+	era_label_node.text = era.era_label
+	era_label_node.add_theme_color_override("font_color", era.color_accent)
+	title_label.text = era.title
+	decade_label.text = era.decade
+	decade_label.add_theme_color_override("font_color", era.color_accent)
+
+	# Divider color
+	divider.color = Color(era.color_accent, 0.3)
+
+	# Summary
+	summary_label.clear()
+	summary_label.push_color(Color(0.82, 0.82, 0.86))
+	summary_label.append_text(era.summary)
+
+	# Characteristics
+	for child in char_container.get_children():
+		child.queue_free()
+	char_labels.clear()
+	for characteristic in era.characteristics:
+		var lbl := Label.new()
+		lbl.text = "  ◆  " + characteristic
+		lbl.add_theme_font_size_override("font_size", 17)
+		lbl.add_theme_color_override("font_color", Color(0.72, 0.72, 0.76))
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		char_container.add_child(lbl)
+		char_labels.append(lbl)
+
+	# Pressure meter
+	_update_pressure(era.pressure, era.color_accent)
+
+	# Nav dots
+	_update_nav_dots(index)
+
+	# Nav button visibility
+	nav_prev.disabled = (index == 0)
+	nav_prev.modulate.a = 0.3 if index == 0 else 1.0
+	nav_next.disabled = (index >= eras.size() - 1)
+	nav_next.modulate.a = 0.3 if index >= eras.size() - 1 else 1.0
+
+
+func _update_pressure(level: float, accent_color: Color) -> void:
+	var fill_height: float = PRESSURE_BAR_HEIGHT * level
+	var fill_y: float = 20 + PRESSURE_BAR_HEIGHT - fill_height
+
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(pressure_bar_fill, "position:y", fill_y, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(pressure_bar_fill, "size:y", fill_height, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(pressure_bar_fill, "color", accent_color, 0.5)
+
+	pressure_value_label.text = str(int(level * 100)) + "%"
+
+
+func _update_nav_dots(active: int) -> void:
+	for i in range(nav_dots.size()):
+		if i == active:
+			nav_dots[i].add_theme_color_override("font_color", Color.WHITE)
+			nav_dots[i].add_theme_font_size_override("font_size", 22)
+		elif i < active:
+			nav_dots[i].add_theme_color_override("font_color", Color(1, 1, 1, 0.45))
+			nav_dots[i].add_theme_font_size_override("font_size", 18)
+		else:
+			nav_dots[i].add_theme_color_override("font_color", Color(1, 1, 1, 0.18))
+			nav_dots[i].add_theme_font_size_override("font_size", 18)
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  TRANSITIONS
+# ═══════════════════════════════════════════════════════════════════
+
+func _go_to_era(index: int) -> void:
+	if transitioning:
+		return
+	if index < 0 or index >= eras.size():
+		return
+	if index == current_era:
+		return
+
+	transitioning = true
+
+	# Fade out
+	var fade_out := create_tween()
+	fade_out.tween_property(transition_overlay, "color:a", 1.0, TRANSITION_DURATION * 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await fade_out.finished
+
+	# Swap content
+	_show_era(index)
+
+	# Fade in
+	var fade_in := create_tween()
+	fade_in.tween_property(transition_overlay, "color:a", 0.0, TRANSITION_DURATION * 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	await fade_in.finished
+
+	transitioning = false
+	_animate_content_in()
+
+
+func _animate_content_in() -> void:
+	# Stagger reveal: era label, title, decade, divider, summary, then each characteristic
+	var elements: Array[Control] = [era_label_node, title_label, decade_label, divider, summary_label]
+	for lbl in char_labels:
+		elements.append(lbl)
+
+	# Set all to invisible first
+	for el in elements:
+		el.modulate.a = 0.0
+		el.position.y += 12
+
+	# Stagger them in
+	for i in range(elements.size()):
+		var el := elements[i]
+		var delay := i * CONTENT_STAGGER
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(el, "modulate:a", 1.0, 0.35).set_delay(delay).set_trans(Tween.TRANS_QUAD)
+		tween.tween_property(el, "position:y", el.position.y - 12, 0.35).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  NAVIGATION CALLBACKS
+# ═══════════════════════════════════════════════════════════════════
+
+func _on_prev_pressed() -> void:
+	_go_to_era(current_era - 1)
+
+
+func _on_next_pressed() -> void:
+	_go_to_era(current_era + 1)
+
+
+func _on_dot_pressed(index: int) -> void:
+	_go_to_era(index)

@@ -1,0 +1,11 @@
+# Godot 4 — generated files
+.godot/
+
+# Export
+*.export
+export_presets.cfg
+
+# Mono-specific (not needed for GDScript)
+.mono/
+data_*/
+mono_crash.*.json
