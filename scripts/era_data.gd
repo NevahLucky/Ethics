@@ -77,6 +77,25 @@ static func get_eras() -> Array:
 			"pressure": 1.0,
 			"bg_image": "res://assets/backgrounds/era_4_esports.png",
 		},
+		{
+			"title": "PREDATORY BY DESIGN",
+			"era_label": "ERA V",
+			"decade": "The Modern Age",
+			"color_primary": Color("#4A1A6B"),
+			"color_secondary": Color("#7B2FBE"),
+			"color_accent": Color("#C77DFF"),
+			"color_bg_tint": Color(0.14, 0.06, 0.22, 0.45),
+			"summary": "Today's games aren't just played — they're engineered to extract. Behind polished interfaces lie dark patterns designed to manipulate behavior: artificial scarcity, variable-ratio reward schedules, social pressure loops, and predatory pricing disguised as 'deals.' The line between game design and behavioral exploitation has never been thinner.",
+			"characteristics": [
+				"Loot boxes exploit gambling psychology with variable rewards",
+				"Battle passes weaponize sunk-cost fallacy and time pressure",
+				"Daily login rewards and rotating shops manufacture FOMO",
+				"Dark patterns obscure real costs with virtual currencies",
+				"Notification systems hijack attention to drive re-engagement"
+			],
+			"pressure": 1.0,
+			"bg_image": "res://assets/backgrounds/era_5_predatory.png",
+		},
 	]
 
 
