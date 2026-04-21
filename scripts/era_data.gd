@@ -36,7 +36,7 @@ static func get_eras() -> Array:
 			],
 			"ethical_label": "Low Concern",
 			"reflection": "When does challenge become a tool to increase spending rather than enjoyment?",
-			"pressure": 0.25,
+			"pressure": 0.2,
 			"bg_image": "res://assets/backgrounds/era_1_arcade.png",
 		},
 		{
@@ -71,7 +71,7 @@ static func get_eras() -> Array:
 			],
 			"ethical_label": "Lower Concern",
 			"reflection": "What changed when games stopped being sold as complete products?",
-			"pressure": 0.45,
+			"pressure": 0.4,
 			"bg_image": "res://assets/backgrounds/era_2_living_room.png",
 		},
 		{
@@ -108,7 +108,7 @@ static func get_eras() -> Array:
 			],
 			"ethical_label": "High Concern",
 			"reflection": "Are players making free choices, or are they being nudged by frustration and uncertainty?",
-			"pressure": 0.75,
+			"pressure": 0.6,
 			"bg_image": "res://assets/backgrounds/era_3_bedroom.png",
 		},
 		{
@@ -146,7 +146,7 @@ static func get_eras() -> Array:
 			],
 			"ethical_label": "Very High Concern",
 			"reflection": "When a game pressures people to keep paying and returning, is it still just entertainment?",
-			"pressure": 1.0,
+			"pressure": 0.8,
 			"bg_image": "res://assets/backgrounds/era_4_esports.png",
 		},
 		{
@@ -181,8 +181,8 @@ static func get_eras() -> Array:
 			],
 			"ethical_label": "Key Reflection",
 			"reflection": "Next time you spend in a game, ask: was it your choice, or was the system designed to push you there?",
-			"pressure": 0.9,
-			"bg_image": "res://assets/backgrounds/era_5_conclusion.png",
+			"pressure": 1.0,
+			"bg_image": "res://assets/backgrounds/era_5_predatory.png",
 		},
 	]
 
