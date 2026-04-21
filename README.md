@@ -22,3 +22,6 @@ We will be using articles, reports from industries, and some case studies on beh
 ### How would you know if your project is successful? (E.g., how would you or others evaluate it?)
 
 Our project is considered successful if we can educate users to better understand monetization strategies and become more aware of how they’re spending money on these games. We will evaluate this through users’ feedback in a form of quizzes asking them to identify manipulative design elements after interacting with our prototype.
+
+### AI Usage Statement
+This project made limited use of AI tools (such as ChatGPT) to assist with structuring ideas, refining written explanations, and generating supporting assets like background image prompts. All core concepts, research direction, and implementation decisions were developed by the team. AI was used strictly as a support tool to improve clarity and efficiency, and all outputs were reviewed and edited to ensure accuracy and alignment with the project’s goals.
